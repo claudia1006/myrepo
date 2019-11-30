@@ -1,0 +1,1508 @@
+MERGE DE TODOS ORIGINAL 
+
+VARIABLES DE TODOS 
+Datos del Banco Mundial:
+electricidad
+empleo
+expo
+internet
+basevida
+GDP
+crepbi
+agua
+Todo esto debe estar en merge primero
+
+
+No son del Banco Mundial:
+salud
+ccarre
+
+GP
+URBANIZACION
+SCHOOLING
+ALFABETIZACION
+INVERSION EN EDUCACION
+studTeach
+
+INDICES
+
+Bienestar <- empleo, basevida,  agua, salud
+
+Urbanización <- urbanizacion, electricidad, internet, ccarre
+
+Educación <- alfabetización, schooling, inversion, studteach
+
+Desarrollo económico <- crepbi, gpd, expo, porcentaje del PBI en recaudación de impuestos.
+
+
+ELECTRICIDAD
+
+```{r}
+library(rio)
+elec="https://github.com/adrianoshimante1998/Trabajo-grupal/raw/master/API_EG.ELC.ACCS.ZS_DS2_en_excel_v2_422316.xls"
+electricidad=import(elec)
+electricidad[,]=lapply(electricidad[,], trimws,whitespace = "[\\h\\v]") # no blanks
+electricidad=na.omit(electricidad)
+names(electricidad)=gsub(" ","",names(electricidad)) 
+electricidad$Electricity2017=as.numeric(electricidad$Electricity2017) #UNO SOLO 
+electricidad=na.omit(electricidad) 
+```
+
+EMPLEO
+
+```{r}
+EMPLEO="https://github.com/claudia1006/PROYECTO/raw/master/%25employment.xls"
+empleo=import(EMPLEO)
+empleo[,]=lapply(empleo[,], trimws,whitespace = "[\\h\\v]") # no blanks
+names(empleo)=gsub(" ","",names(empleo)) 
+empleo$`%Empleo2017`=as.numeric(empleo$`%Empleo2017`) #UNO SOLO 
+empleo=na.omit(empleo) 
+
+```
+
+COBERTURA DE SALUD 
+
+```{r}
+SA="https://github.com/claudia1006/PROYECTO/raw/master/%25%20de%20cobertura%20de%20salud..xlsx"
+salud=import(SA)
+salud[,]=lapply(salud[,], trimws,whitespace = "[\\h\\v]") # no blanks
+names(salud)=gsub(" ","",names(salud)) 
+salud$`%decoberturadesalud2017`=as.numeric(salud$`%decoberturadesalud2017`) #UNO SOLO 
+salud=na.omit(salud) 
+names(salud)[1]="CountryName"
+```
+
+EXPORTACIONES DE BIENES Y SERVICIOS 
+
+```{r}
+EX="https://github.com/claudia1006/PROYECTO/raw/master/Exportaciones%20de%20bienes%20y%20servicios%20(%25%20del%20GDP).xls"
+expo=import(EX)
+expo[,]=lapply(expo[,], trimws,whitespace = "[\\h\\v]") # no blanks
+names(expo)=gsub(" ","",names(expo)) 
+expo$`Expobienesyservicio%delGDP2017`=as.numeric(expo$`Expobienesyservicio%delGDP2017`) #UNO SOLO 
+expo=na.omit(expo) 
+```
+
+% DE POBLACION QUE USA INTERNET 
+
+```{r}
+linkinter="https://github.com/Alfredo-Espinoza/Estadistica-2-Parte-individual-del-trabajo-grupal/raw/master/API_IT.NET.USER.ZS_DS2_en_excel_v2_199844.xlsx"
+#Descargando en carpeta
+download.file(linkinter, "intercel.xlsx")
+internet <- import_list('intercel.xlsx',rbind = TRUE)
+#Borrando las columnas de otros años
+internet[2:50]=NULL
+internet[2:12]=NULL
+internet[3:13]=NULL
+
+#Eliminando los NA
+internet=internet[complete.cases(internet),]
+#Cambiando nombres de variables.
+names(internet)[1]="CountryName"
+names(internet)[2]="Porcentaje de la población que usa internet (2017)"
+
+#Eliminando posibles espacios vacios
+internet$CountryName=trimws(internet$CountryName,whitespace = "[\\h\\v]")
+internet$`Porcentaje de la población que usa internet (2017)`=trimws(internet$`Porcentaje de la población que usa internet (2017)`,whitespace = "[\\h\\v]")
+
+#Eliminando primera fila.
+
+internet=internet[-1,]
+
+#Hay observaciones que corresponden a la suciedad de la data. Varias de ellas serán eliminadas una vez se realiza el merge de acuerdo a "Pais" con las variables del grupo de trabajo. El resto tendrán que ser eliminadas manualmente.
+
+#Pasando la variable a numérico
+
+internet$`Porcentaje de la población que usa internet (2017)`=as.numeric(internet$`Porcentaje de la población que usa internet (2017)`)
+names(internet)=gsub(" ","",names(internet))
+```
+
+EXPECTATIVA DE VIDA AL NACER 
+
+```{r}
+linkvida="https://github.com/Alfredo-Espinoza/Estadistica-2-Parte-individual-del-trabajo-grupal/raw/master/API_SP.DYN.LE00.IN_DS2_en_excel_v2_199538.xlsx"
+#Descargando en carpeta
+download.file(linkvida, "vida.xlsx")
+
+#Unimos todas las hojas:
+
+basevida <- import_list('vida.xlsx',rbind = TRUE)
+#Borrando columnas innecesarias
+basevida[2:50]=NULL
+basevida[2:12]=NULL
+basevida[3:13]=NULL
+
+#Borramos los NAs
+
+basevida=basevida[complete.cases(basevida),]
+
+#Cambiando nombres de variable
+
+names(basevida)[1]="CountryName"
+names(basevida)[2]="Expectativa de vida en años al nacer (2017)"
+
+#Eliminamos la primera fila, porque es producto de la suciedad de losd atos.
+basevida=basevida[-c(1),]
+
+#Eliminando posibles espacios vacios
+
+basevida$CountryName=trimws(basevida$CountryName,whitespace = "[\\h\\v]")
+basevida$`Expectativa de vida en años al nacer (2017)`=trimws(basevida$`Expectativa de vida en años al nacer (2017)`,whitespace = "[\\h\\v]")
+
+#Pasando a numérico la variable a estudiar
+
+basevida$"Expectativa de vida en años al nacer (2017)"=as.numeric(basevida$"Expectativa de vida en años al nacer (2017)")
+names(basevida)=gsub(" ","",names(basevida))
+```
+
+GDP PER CAPITA EN DÓLARES
+
+```{r}
+GDPP="https://github.com/claudia1006/PROYECTO/raw/master/GDP%20PER%20CAPITA%20CURRENT%20%24.xlsx"
+GDP=import(GDPP)
+GDP[,]=lapply(GDP[,], trimws,whitespace = "[\\h\\v]") # no blanks
+names(GDP)[2]="GDP PER CAPITA EN $"
+GDP$`GDP PER CAPITA EN $`=as.numeric(GDP$`GDP PER CAPITA EN $`) #UNO SOLO 
+GDP=na.omit(GDP)
+names(GDP)=gsub(" ","",names(GDP)) 
+GDP=na.omit(GDP) 
+```
+
+ACCESO BASICO AL AGUA
+
+```{r}
+AGUA="https://github.com/claudia1006/PROYECTO/raw/master/ACCESO.xls"
+agua=import(AGUA)
+agua[,]=lapply(agua[,], trimws,whitespace = "[\\h\\v]") # no blanks
+names(agua)=gsub(" ","",names(agua))
+agua$`Accesoalagua(en%)2017`=as.numeric(agua$`Accesoalagua(en%)2017`) #UNO SOLO 
+agua$...3=NULL
+agua=na.omit(agua)
+```
+
+CRECIMIENTO DEL PBI
+
+```{r}
+CRE="https://github.com/Alfredo-Espinoza/Estadistica-2-Parte-individual-del-trabajo-grupal/raw/master/crecimiento%20bm.xlsx"
+crepbi=import(CRE)
+crepbi[,]=lapply(crepbi[,], trimws,whitespace = "[\\h\\v]") # no blanks
+names(crepbi)=gsub(" ","",names(crepbi))
+```
+
+```{r}
+crepbi$`2017`=as.numeric(crepbi$`2017`)
+```
+
+```{r}
+crepbi$CountryCode=NULL
+```
+```{r}
+names(crepbi)[2]="CrecimientoPBI2017"
+```
+
+
+CALIDAD DE CARRETERAS 
+
+```{r}
+CARRE="https://github.com/claudia1006/PROYECTO/raw/master/calidad%20de%20carreteras.xlsx"
+ccarre=import(CARRE)
+ccarre[,]=lapply(ccarre[,], trimws,whitespace = "[\\h\\v]") # no blanks
+ccarre$`Road quality`=as.numeric(ccarre$`Road quality`) #UNO SOLO'
+names(ccarre)=gsub(" ","",names(ccarre))
+```
+
+```{r}
+#eliminando numero adelante 
+library(stringr)
+splitted= str_split(ccarre$Country,
+                    pattern = '\\s',
+                    simplify = T)[,-1]
+```
+
+```{r}
+#uniendo los nombres 
+ccarre$Country=trimws(paste(splitted[,1],splitted[,2],splitted[,3]),whitespace = "[\\h\\v]")
+names(ccarre)[1]="CountryName"
+```
+
+```{r}
+summary(agua)
+summary(basevida)
+summary(ccarre)
+summary(crepbi)
+summary(electricidad)
+summary(empleo)
+summary(expo)
+summary(GDP)
+summary(internet)
+summary(salud)
+```
+
+DEMOCRACIA
+
+```{r}
+library(rio)
+library(htmltab)
+index="https://github.com/claudia1006/PROYECTO/raw/master/Democracy.xlsx"
+de=import(index, which=2)
+```
+
+
+```{r}
+#sacando nombres raros 
+library(stringr)
+names(de)=str_replace_all(names(de), "[^[:ascii:]]", "") 
+```
+
+```{r}
+#sacando valores raros 
+de[,]=lapply(de[,], str_replace_all,"[^[:ascii:]]","")
+```
+
+```{r}
+#Reemplazar espacios en blanco por nada 
+names(de)=gsub(" ","",names(de)) 
+names(de)
+```
+```{r}
+#no blanks
+de[,]=lapply(de[,], trimws,whitespace = "[\\h\\v]") 
+str(de)
+```
+```{r}
+de=na.omit(de)
+```
+
+```{r}
+names(de)[2]="Regime type"
+names(de)[1]="CountryName"
+```
+
+
+```{r}
+row.names(de)=de$Country
+```
+
+```{r}
+library(dplyr)
+de$`Regime type`=recode(de$`Regime type`,
+       'Full democracies'='1',
+       'Flawed democracy'='1',
+       'Hybrid regime'='0',
+       'Authoritarian'='0')
+de$`Regime type`=as.ordered(de$`Regime type`)
+```
+
+
+Incluimos las variables de alfabetización (worldatlas), tasa de escolaridad, tasa de urbanización y ratio profesores-alumnos.
+#Variables GP
+ 
+ALFABETIZACION
+
+```{r}
+library(htmltab)
+literacy2=htmltab(doc="https://www.worldatlas.com/articles/the-highest-literacy-rates-in-the-world.html", which='//*[@id="artReg-table"]/table')
+```
+
+```{r}
+literacy2$Rank=NULL
+```
+
+```{r}
+names(literacy2)=c("Country", "Literacy Rate")
+```
+
+```{r}
+literacy2$Country=trimws(literacy2$Country,whitespace = "[\\h\\v]")
+```
+Añadimos valores perdidos
+```{r}
+literacy2$`Literacy Rate`[literacy2$`Literacy Rate`=="NA"]<-NA
+```
+
+```{r}
+literacy2=na.omit(literacy2)
+```
+
+```{r}
+library(stringr)
+literacy2$`Literacy Rate`=gsub('%',"",literacy2$`Literacy Rate`)
+```
+
+```{r}
+literacy2[-1]=lapply(literacy2[-1], as.numeric)
+```
+
+```{r}
+literacy2=na.omit(literacy2)
+```
+
+```{r}
+str(literacy2)
+```
+Cambaimos el nombre de la variable país:
+```{r}
+names(literacy2)=c("CountryName","LitRate")
+```
+
+La segunda variable que tiene relación con la calidad de educación es la Tasa de Escolaridad.
+SCHOOLING
+
+```{r}
+lkXLSX="https://github.com/Geanze/TRABAJO-GRUPAL-ESTAD2/raw/master/education-index.xlsx"
+Schooling=import(lkXLSX)
+```
+
+```{r}
+str(Schooling)
+```
+
+```{r}
+Schooling$`HDI Rank`=NULL
+Schooling$`1980`=NULL
+Schooling$`1985`=NULL
+Schooling$`1990`=NULL
+Schooling$`1995`=NULL
+Schooling$`2000`=NULL
+Schooling$`2005`=NULL
+Schooling$`2006`=NULL
+Schooling$`2007`=NULL
+Schooling$`2008`=NULL
+Schooling$`2009`=NULL
+Schooling$`2010`=NULL
+Schooling$`2011`=NULL
+Schooling$`2012`=NULL
+```
+
+```{r}
+names(Schooling)=c("CountryName", "SchoRate")
+```
+
+```{r}
+Schooling[c(2)]= lapply(Schooling[c(2)], as.numeric)
+```
+
+```{r}
+Schooling[complete.cases(Schooling),]
+Schooling=na.omit(Schooling)
+```
+
+
+INVERSION EN EDUCACION
+```{r}
+library(rio)
+InvestEdu2=import("https://github.com/Geanze/TRABAJO-GRUPAL-ESTAD2/raw/master/InvestPBIEducation.xls")
+InvestEdu2$`Año de data`=NULL
+InvestEdu2$`Country Code`=NULL
+names(InvestEdu2)=c("CountryName", "ExpendEdu")
+```
+
+```{r}
+InvestEdu2=na.omit(InvestEdu2)
+```
+
+
+URBANIZACION
+```{r}
+lkXLS="https://github.com/Geanze/TRABAJO-GRUPAL-ESTAD2/raw/master/WUP2018-F01-Total_Urban_Rural.xls"
+urban=import(lkXLS)
+```
+
+```{r}
+str(urban)
+```
+
+```{r}
+urban$Urban=NULL
+urban$Rural=NULL
+urban$Total=NULL
+```
+
+```{r}
+names(urban)=c("CountryName", "UrbRate")
+```
+
+```{r}
+urban[complete.cases(urban),]
+urban[c(1)]=lapply(urban[c(1)], trimws,whitespace = "[\\h\\v]")
+```
+
+Porcentaje de número de estudiantes por profesor en cada país (invertida)
+
+studTeach
+```{r}
+library(rio)
+studTeach=import("https://github.com/Geanze/TRABAJO-GRUPAL-ESTAD2/raw/master/StudTeachRatio.xls")
+```
+
+```{r}
+studTeach$`Año de data`=NULL
+studTeach$`Country Code`=NULL
+```
+
+```{r}
+names(studTeach)=c("CountryName", "StuTeachRat")
+```
+
+```{r}
+complete.cases(studTeach)
+```
+
+```{r}
+studTeach=na.omit(studTeach)
+```
+
+```{r}
+studTeach$StuTeachRat=100-studTeach$StuTeachRat
+```
+
+```{r}
+studTeach[2]==lapply(studTeach[2], as.numeric)
+```
+
+```{r}
+complete.cases(studTeach)
+```
+
+
+```{r}
+str(studTeach)
+```
+
+
+Combinar las del banco mundial
+electricidad
+empleo
+expo
+internet
+basevida
+GDP
+crepbi
+agua
+
+
+```{r}
+
+elecem=merge(electricidad,empleo,all.x=T, all.y=T)
+
+```
+
+```{r}
+elecem[!complete.cases(elecem),]
+```
+
+
+```{r}
+library(knitr)
+library(kableExtra)
+kable(elecem[!complete.cases(elecem),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+```{r}
+elecem=na.omit(elecem)
+```
+
+Se pierden por falta de datos
+```{r}
+elexpo=merge(elecem,expo,all.x=T, all.y=T)
+```
+
+```{r}
+kable(elexpo[!complete.cases(elexpo),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+```{r}
+elexpo=na.omit(elexpo)
+```
+
+Con internet
+```{r}
+elein=merge(elexpo,internet,all.x=T, all.y=T)
+
+```
+
+```{r}
+kable(elein[!complete.cases(elein),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+Se pierde por datos
+```{r}
+elein=na.omit(elein)
+```
+
+Con basevida
+```{r}
+elvida=merge(elein,basevida,all.x=T, all.y=T)
+```
+
+```{r}
+kable(elvida[!complete.cases(elvida),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+Falta de datos
+```{r}
+elvida=na.omit(elvida)
+```
+
+Con GDP
+```{r}
+elgdp=merge(elvida,GDP,all.x=T, all.y=T)
+```
+
+```{r}
+kable(elgdp[!complete.cases(elgdp),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+Falta de datos y no coincidió en los índices regionales.
+```{r}
+elgdp=na.omit(elgdp)
+```
+
+Con crepbi
+```{r}
+elcrep=merge(elgdp,crepbi,all.x=T, all.y=T)
+
+```
+
+```{r}
+kable(elcrep[!complete.cases(elcrep),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+Falta de datos
+```{r}
+elcrep=na.omit(elcrep)
+```
+
+Con agua
+```{r}
+elagua=merge(elcrep,agua,all.x=T, all.y=T)
+
+```
+
+
+```{r}
+kable(elagua[!complete.cases(elagua),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+Se pierden por falta de datos
+```{r}
+elagua=na.omit(elagua)
+```
+
+ESTAN COMBINADAS TODAS LAS DEL BANCO MUNDIAL EN elagua
+
+Con salud
+```{r}
+agsalud=merge(elagua,salud,all.x=T, all.y=T)
+```
+
+
+```{r}
+kable(agsalud[!complete.cases(agsalud),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+
+Codigo de cambio
+```{r}
+salud[salud$CountryName=="Bahamas","CountryName"]="Bahamas, The"
+salud[salud$CountryName=="Bolivia (Plurinational State of)","CountryName"]="Bolivia"
+salud[salud$CountryName=="Congo","CountryName"]="Congo, Rep."
+salud[salud$CountryName=="Côte d'Ivoire","CountryName"]="Cote d'Ivoire"
+salud[salud$CountryName=="Czechia","CountryName"]="Czech Republic"
+salud[salud$CountryName=="Democratic Republic of the Congo","CountryName"]="Congo, Dem. Rep."
+salud[salud$CountryName=="Egypt","CountryName"]="Egypt, Arab Rep."
+salud[salud$CountryName=="Gambia","CountryName"]="Gambia, The"
+salud[salud$CountryName=="Iran (Islamic Republic of)","CountryName"]="Iran, Islamic Rep."
+salud[salud$CountryName=="Republic of Korea","CountryName"]="Korea, Rep."
+salud[salud$CountryName=="Kyrgyzstan","CountryName"]="Kyrgyz Republic"
+salud[salud$CountryName=="Lao People's Democratic Republic","CountryName"]="Lao PDR"
+salud[salud$CountryName=="Republic of North Macedonia","CountryName"]="North Macedonia"
+salud[salud$CountryName=="Republic of Moldova","CountryName"]="Moldova"
+salud[salud$CountryName=="Slovakia","CountryName"]="Slovak Republic"
+salud[salud$CountryName=="Saint Vincent and the Grenadines","CountryName"]="St. Vincent and the Grenadines"
+salud[salud$CountryName=="United Kingdom of Great Britain and Northern Ireland","CountryName"]="United Kingdom"
+salud[salud$CountryName=="United Republic of Tanzania","CountryName"]="Tanzania"
+salud[salud$CountryName=="United States of America","CountryName"]="United States"
+salud[salud$CountryName=="Viet Nam","CountryName"]="Vietnam"
+
+```
+
+```{r}
+agsalud=merge(elagua,salud,all.x=T, all.y=T)
+```
+
+```{r}
+kable(agsalud[!complete.cases(agsalud),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+Falta de datos
+```{r}
+agsalud=na.omit(agsalud)
+```
+
+Con ccarre
+```{r}
+accarre=merge(agsalud,ccarre,all.x=T, all.y=T)
+```
+
+```{r}
+kable(accarre[!complete.cases(accarre),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+
+```{r}
+ccarre[ccarre$CountryName=="Bosnia & Herz.","CountryName"]="Bosnia and Herzegovina"
+ccarre[ccarre$CountryName=="Brunei","CountryName"]="Brunei Darussalam"
+ccarre[ccarre$CountryName=="Cape Verde","CountryName"]="Cabo Verde"
+ccarre[ccarre$CountryName=="Czech Rep.","CountryName"]="Czech Republic"
+ccarre[ccarre$CountryName=="Czech Rep.","CountryName"]="Czech Republic"
+ccarre[ccarre$CountryName=="Domin. Rep.","CountryName"]="Dominican Republic"
+ccarre[ccarre$CountryName=="DR Congo","CountryName"]="Congo, Dem. Rep."
+ccarre[ccarre$CountryName=="Egypt","CountryName"]="Egypt, Arab Rep."
+ccarre[ccarre$CountryName=="Gambia","CountryName"]="Gambia, The"
+ccarre[ccarre$CountryName=="Iran","CountryName"]="Iran, Islamic Rep."
+ccarre[ccarre$CountryName=="Ivory Coast","CountryName"]="Cote d'Ivoire"
+ccarre[ccarre$CountryName=="Kyrgyzstan","CountryName"]="Kyrgyz Republic"
+ccarre[ccarre$CountryName=="Laos","CountryName"]="Lao PDR"
+ccarre[ccarre$CountryName=="Macedonia","CountryName"]="North Macedonia"
+ccarre[ccarre$CountryName=="Russia","CountryName"]="Russian Federation"
+ccarre[ccarre$CountryName=="Slovakia","CountryName"]="Slovak Republic"	
+ccarre[ccarre$CountryName=="South Korea","CountryName"]="Korea, Rep."
+ccarre[ccarre$CountryName=="UA Emirates","CountryName"]="United Arab Emirates"
+ccarre[ccarre$CountryName=="UK","CountryName"]="United Kingdom"
+ccarre[ccarre$CountryName=="USA","CountryName"]="United States"
+
+```
+
+```{r}
+accarre=merge(agsalud,ccarre,all.x=T, all.y=T)
+```
+
+```{r}
+kable(accarre[!complete.cases(accarre),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+
+```{r}
+accarre=na.omit(accarre)
+```
+
+ESTAN COMBINADOS 10 INDICADORES
+Combinar las cuatro de GP
+
+literacy2
+Schooling
+InvestEdu2
+urban
+studTeach
+
+Con literacy2
+```{r}
+aclit=merge(accarre,literacy2,all.x=T, all.y=T)
+```
+
+```{r}
+kable(aclit[!complete.cases(aclit),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+```{r}
+literacy2[literacy2$CountryName=="Bolivia (Plurinational State of)","CountryName"]="Bolivia"
+literacy2[literacy2$CountryName=="Côte d'Ivoire","CountryName"]="Cote d'Ivoire"
+literacy2[literacy2$CountryName=="Democratic Republic of the Congo","CountryName"]="Congo, Dem. Rep."
+literacy2[literacy2$CountryName=="Egypt","CountryName"]="Egypt, Arab Rep."
+literacy2[literacy2$CountryName=="Gambia","CountryName"]="Gambia, The"
+literacy2[literacy2$CountryName=="Iran (Islamic Republic of)","CountryName"]="Iran, Islamic Rep."
+literacy2[literacy2$CountryName=="Kyrgyzstan","CountryName"]="Kyrgyz Republic"
+literacy2[literacy2$CountryName=="Lao People's Democratic Republic","CountryName"]="Lao PDR"
+literacy2[literacy2$CountryName=="Republic of Korea","CountryName"]="Korea, Rep."
+literacy2[literacy2$CountryName=="Slovakia","CountryName"]="Slovak Republic"
+literacy2[literacy2$CountryName=="The former Yugoslav Republic of Macedonia","CountryName"]="North Macedonia"
+literacy2[literacy2$CountryName=="Viet Nam","CountryName"]="Vietnam"
+literacy2[literacy2$CountryName=="Republic of Moldova","CountryName"]="Moldova"
+literacy2[literacy2$CountryName=="United Republic of Tanzania","CountryName"]="Tanzania"
+```
+
+```{r}
+aclit=merge(accarre,literacy2,all.x=T, all.y=T)
+```
+
+```{r}
+kable(aclit[!complete.cases(aclit),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+```{r}
+aclit=na.omit(aclit)
+```
+
+Con Schooling
+```{r}
+clischol=merge(aclit,Schooling,all.x=T, all.y=T)
+```
+
+```{r}
+kable(clischol[!complete.cases(clischol),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+
+```{r}
+Schooling[Schooling$CountryName=="Bolivia (Plurinational State of)","CountryName"]="Bolivia"
+Schooling[Schooling$CountryName=="Cape Verde","CountryName"]="Cabo Verde"
+Schooling[Schooling$CountryName=="Congo (Democratic Republic of the)","CountryName"]="Congo, Dem. Rep."
+Schooling[Schooling$CountryName=="Egypt","CountryName"]="Egypt, Arab Rep."
+Schooling[Schooling$CountryName=="Gambia","CountryName"]="Gambia, The"
+Schooling[Schooling$CountryName=="Iran (Islamic Republic of)","CountryName"]="Iran, Islamic Rep."
+Schooling[Schooling$CountryName=="Korea (Republic of)","CountryName"]="Korea, Rep."
+Schooling[Schooling$CountryName=="Kyrgyzstan","CountryName"]="Kyrgyz Republic"
+Schooling[Schooling$CountryName=="Lao People's Democratic Republic","CountryName"]="Lao PDR"
+Schooling[Schooling$CountryName=="Moldova (Republic of)","CountryName"]="Moldova"
+Schooling[Schooling$CountryName=="Slovakia","CountryName"]="Slovak Republic"
+Schooling[Schooling$CountryName=="Tanzania (United Republic of)","CountryName"]="Tanzania"
+Schooling[Schooling$CountryName=="The former Yugoslav Republic of Macedonia","CountryName"]="North Macedonia"
+
+```
+
+
+```{r}
+clischol=merge(aclit,Schooling,all.x=T, all.y=T)
+```
+
+```{r}
+kable(clischol[!complete.cases(clischol),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+
+```{r}
+clischol=na.omit(clischol)
+```
+
+Con InvestEdu2
+
+```{r}
+invcli=merge(clischol,InvestEdu2,all.x=T, all.y=T)
+```
+
+```{r}
+kable(invcli[!complete.cases(invcli),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+
+
+Falta de datos
+```{r}
+invcli=na.omit(invcli)
+```
+
+Con urban
+```{r}
+invurb=merge(invcli,urban,all.x=T, all.y=T)
+```
+
+```{r}
+kable(invurb[!complete.cases(invurb),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+
+```{r}
+urban[urban$CountryName=="Bolivia (Plurinational State of)","CountryName"]="Bolivia"
+urban[urban$CountryName=="Côte d'Ivoire","CountryName"]="Cote d'Ivoire"
+urban[urban$CountryName=="Czechia","CountryName"]="Czech Republic"
+urban[urban$CountryName=="Democratic Republic of the Congo","CountryName"]="Congo, Dem. Rep."
+urban[urban$CountryName=="Gambia","CountryName"]="Gambia, The"
+urban[urban$CountryName=="Iran (Islamic Republic of)","CountryName"]="Iran, Islamic Rep."
+urban[urban$CountryName=="Kyrgyzstan","CountryName"]="Kyrgyz Republic"
+urban[urban$CountryName=="Lao People's Democratic Republic","CountryName"]="Lao PDR"
+urban[urban$CountryName=="Slovakia","CountryName"]="Slovak Republic"
+urban[urban$CountryName=="United Republic of Tanzania","CountryName"]="Tanzania"
+urban[urban$CountryName=="United States of America","CountryName"]="United States"
+urban[urban$CountryName=="Republic of Moldova","CountryName"]="Moldova"
+urban[urban$CountryName=="Viet Nam","CountryName"]="Vietnam"
+
+```
+
+```{r}
+invurb=merge(invcli,urban,all.x=T, all.y=T)
+```
+
+```{r}
+kable(invurb[!complete.cases(invurb),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+
+```{r}
+invurb=na.omit(invurb)
+```
+
+Con studTeach
+
+```{r}
+sturb=merge(invurb,studTeach,all.x=T, all.y=T)
+```
+
+```{r}
+kable(sturb[!complete.cases(sturb),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+
+Falta de datos
+```{r}
+sturb=na.omit(sturb)
+```
+
+sturb es la base final por ahora.
+Añadimos democracia
+```{r}
+deturb=merge(sturb,de,all.x=T, all.y=T)
+```
+
+```{r}
+kable(deturb[!complete.cases(deturb),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+
+```{r}
+de[de$CountryName=="Democratic Republic of Congo","CountryName"]="Congo, Dem. Rep."
+de[de$CountryName=="Cte dIvoire","CountryName"]="Cote d'Ivoire"
+de[de$CountryName=="Gambia","CountryName"]="Gambia, The"
+de[de$CountryName=="Iran","CountryName"]="Iran, Islamic Rep."
+de[de$CountryName=="Laos","CountryName"]="Lao PDR"
+de[de$CountryName=="Russia","CountryName"]="Russian Federation"
+de[de$CountryName=="Slovakia","CountryName"]="Slovak Republic"
+de[de$CountryName=="United States of America","CountryName"]="United States"
+
+```
+
+```{r}
+deturb=merge(sturb,de,all.x=T, all.y=T)
+```
+
+```{r}
+kable(deturb[!complete.cases(deturb),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+
+```{r}
+deturb=na.omit(deturb)
+```
+
+
+INDICES
+Bienestar <- empleo, basevida,  agua, salud
+Urbanización <- urbanizacion, electricidad, internet, ccarre
+Educación <- alfabetización, schooling, inversion, studteach
+Desarrollo económico <- crepbi, gpd, expo, porcentaje del PBI en recaudación de impuestos.
+Elaboracion de confirmativo
+Recodificamos los nombres de las variables para que sean más simples
+```{r}
+str(deturb)
+```
+
+```{r}
+names(deturb)=c("CountryName","electric","empleo","export","internet","expevida","gdpcapita","pbicreci","agua","saludcob","road","litrate","schorate","gastoedu","urbrate","stuteachrat","regimetype")
+```
+
+```{r}
+row.names(deturb)=deturb$CountryName
+```
+
+
+#Confirmando modelo teórico
+Si la exploración apoyaba nuestro marco teórico, podemos proponer cómo construir los indices. Estos índices están inspirados en la teoría de Lipset: A mayor modernidad, más democracia. Bienestar, urbanización, educación y desarrollo económico se usan para tratar de expresar "modernidad".
+Bienestar <- empleo, expevida,  agua, saludcob
+Urbanización <- urbrate, electric, internet, road
+Educación <- litrate, schorate, gastoedu, stuteachrat
+Desarrollo económico <- pbicreci, gdpcapita, export
+
+```{r}
+model <- 'bienestar  =~ empleo + expevida + agua + saludcob
+          urbanizacion =~ urbrate + electric + internet + road
+          educacion   =~ litrate + schorate + gastoedu + stuteachrat
+          desarrolloecon   =~ pbicreci + gdpcapita + export'
+```
+
+Ahora vemos qué arroja el modelo:
+
+#NORMALIZACION
+
+```{r}
+# normalizar las variables a valor z:
+deturb2=scale(deturb[,-c(1,17)])
+
+library(lavaan)
+```
+
+```{r}
+cfa_fit <- cfa(model, data=deturb2, 
+           std.lv=TRUE,  
+           missing="fiml")
+```
+
+Preparo los tests:
+```{r}
+allParamCFA=parameterEstimates(cfa_fit,standardized = T)
+allFitCFA=as.list(fitMeasures(cfa_fit))
+```
+
+Veamos resultados:
+
+Si cada indicador tiene una buena conexión con su latente (ver p valor):
+```{r}
+library(knitr)
+kable(allParamCFA[allParamCFA$op=="=~",])
+```
+
+Averigüemos qué tan bien salió el modelo:
+
+El ChiSquare es NO significativo (p_value debe ser mayor a 0.05 para que sea bueno)?
+```{r}
+allFitCFA[c("chisq", "df", "pvalue")] # pvalue>0.05
+```
+Sale mal
+
+El Índice Tucker Lewi es mayor a 0.9?
+```{r}
+allFitCFA$tli # > 0.90
+```
+Sale mal
+
+La Raíz del error cuadrático medio de aproximación es menor a 0.05?
+```{r}
+allFitCFA[c('rmsea.ci.lower','rmsea' ,'rmsea.ci.upper')] # 0.05 en el Int de Conf?
+```
+Sale mal
+
+Añadimos los índices a la data de indicadores:
+```{r}
+deturb=as.data.frame(cbind(deturb,lavPredict(cfa_fit)))
+```
+
+Veamos un resumen:
+```{r}
+summary(deturb)
+```
+
+Referencia
+
+```{r}
+# original
+table(deturb$regimetype)
+```
+1 es democracia. Está bien el orden.
+```{r}
+# como numero
+table(as.numeric(deturb$regimetype))
+```
+
+```{r}
+str(deturb)
+```
+
+
+## CLUSTERS
+
+```{r}
+#Nuestro punto de partida clave siempre ha sido el cálculo de la matriz de distancias, añadamos la semilla aleatoria:
+set.seed(2019) #el R decide que tiene que ser algo aleatorio, facilita que R elija ese punto al azar, permitiría que sea replicable, siempre ponerlo por si acaso para queno salga un país en otro sitio. 
+library(cluster)
+library(factoextra)
+inputData=deturb[,c(18:21)]
+g.dist = daisy(inputData, metric="gower")
+#Y con esa matriz calculamos cuatro clusters en nuestras clases previas, pero tal cantidad de clusters salió de una decisión algo arbitraria. Una pregunta exploratoria clave es cuántos clusters deberíamos calcular, y según ellos saber que hay una cantidad diferenciada de perfiles.
+
+```
+
+1. DETERMINANDO CANTIDAD DE CLUSTERS 
+
+Clusters recomendados para partición:
+
+```{r}
+fviz_nbclust(inputData, pam,diss=g.dist,method = "gap_stat",k.max = 10,verbose = F)
+#Significa 7 clusters 
+#Pam es la cantidad de clusters a decidir 
+```
+
+Clusters recomendados para jerarquización:
+
+```{r}
+fviz_nbclust(inputData, hcut,diss=g.dist,method = "gap_stat",k.max = 10,verbose = F)
+#Se va a utilizar el método del gap_stat para saber cuántos clusters van a haber 
+#Significa 6 clusters
+```
+
+
+2. EVALUANDO LOS CLUSTERS 
+
+Clusterizemos: 
+```{r}
+res.pam = pam(g.dist,7,cluster.only = F)
+res.agnes = hcut(g.dist, k = 4,hc_func='agnes',hc_method = "ward.D") #se emplea el método Ward
+res.diana = hcut(g.dist, k = 4,hc_func='diana')
+
+#Para evaluar, podemos analizar las siluetas (silhouettes), una medida que indica la calidad de asignación de un caso particular.
+```
+
+Evaluación gráfica 
+
+Se van a evaluar los gráficos para cada uno. 
+
+```{r}
+#Evaluación gráfica para pam:
+fviz_silhouette(res.pam)
+
+```
+
+```{r}
+#Evaluación gráfica para agnes:
+fviz_silhouette(res.agnes)
+
+```
+
+```{r}
+#Evaluación gráfica para diana:
+fviz_silhouette(res.diana)
+
+```
+Se asume que el gráfico que tiene menos siluetas negativas es el preferible a los demás.
+También:
+-La técnica de las siluetas van a decir que tan bien han salido 
+  •	Las siluetas revelan cuáles están mal clusterizados
+-Los malos son cuando están para abajito 
+  •	La línea roja entre cortadas es el promedio de las siluetas
+-Mientras, Más o mayor sea el número, mejor silueta
+
+El recomendado es diana.
+
+```{r}
+res.diana <- hcut(g.dist, k = 4,hc_func='diana')
+deturb$clustDIV=res.diana$cluster
+```
+
+
+```{r}
+# guardando resultado anterior en objeto "agg": 
+agg=aggregate(as.matrix(cbind(deturb[,c(18:21)]))~ clustDIV, 
+              data=deturb, # luego las funciones que deseas
+              FUN=plyr::each(MD = median, Media = mean))
+
+# convertir en data frame, y 
+tablaResumen=t(as.data.frame(agg))
+tablaResumen
+```
+
+Plots
+
+```{r,fig.width=10, fig.height=10} 
+library(ggrepel)
+
+fviz_dend(res.diana, cex = 0.5,horiz = T)
+```
+
+
+#AHORA SE QUIERE VISUALIZAR EL MAPA DE CASOS A TRAVÉS DE CLUSTERS.
+```{r}
+# instalar:
+library(sp)
+library(geojsonio)
+library(rgdal)
+
+fromGit="https://github.com/adrianoshimante1998/PC4viernes/raw/master/UIA_World_Countries_Boundaries.geojson"
+
+mapaMundo <- rgdal::readOGR(fromGit,stringsAsFactors = FALSE)
+plot(mapaMundo)
+```
+
+```{r}
+plot(mapaMundo, border='grey')
+```
+
+
+```{r}
+head(mapaMundo@data)
+```
+
+```{r}
+sort(mapaMundo@data$COUNTRYAFF)
+```
+#calculando posiciones
+
+```{r}
+teste=merge(mapaMundo,deturb,by.x='COUNTRYAFF',by.y='CountryName')
+```
+
+```{r}
+teste$COUNTRYAFF
+```
+
+
+```{r}
+names(teste) 
+```
+
+#Se procederá a graficar: ver las posiciones de las provincias:
+```{r}
+aggregate(desarrolloecon~clustDIV,data=teste,FUN = mean)
+```
+
+
+```{r}
+
+# colores
+myColors=c('red','blue',"green","yellow") 
+
+plot(mapaMundo,col='black', main='Mapa  a partir de índices')
+plot(teste,col=myColors[teste$clustDIV], add=T,border="white")
+```
+
+
+## Regresion logistica multivariada
+
+```{r}
+### semilla
+
+set.seed(2019)
+
+### primer modelo:
+#data como subset
+vars1=deturb[,c("regimetype","bienestar","urbanizacion","educacion","desarrolloecon")]
+
+#regresion
+rlog1=glm(regimetype~., data=vars1,family = binomial)
+
+#resultado clásico:
+summary(rlog1)
+```
+
+Veamos ahora el resultado con mejor formato:
+```{r, results='asis'}
+library(stargazer)
+#resultado
+stargazer(rlog1,type="html")
+```
+
+
+```{r}
+predicted1 <- plogis(predict(rlog1, vars1[,-1]))
+```
+
+```{r}
+library(InformationValue)
+confusionMatrix(vars1$regimetype, predicted1)
+```
+
+Predice razonablemene bien?
+
+
+Dos medidas importantes es saber qué tanto acertamos predecir el evento:
+```{r}
+sensitivity(actuals = as.numeric(vars1$regimetype),predictedScores = predicted1)
+
+```
+
+Y qué tanto acertamos predecir la no ocurrencia del evento:
+```{r}
+specificity(actuals = as.numeric(vars1$regimetype),predictedScores = predicted1)
+
+```
+
+
+ODDS RATIO
+```{r}
+exp(cbind(OR = coef(rlog1), confint(rlog1)))
+
+```
+
+
+Efectos marginales
+
+```{r}
+# interpracion usando marginal effects:
+library(margins)
+# 
+(modellog1 = margins(rlog1))
+```
+
+```{r}
+(margins=summary(modellog1))
+
+```
+
+
+## CLUSTERS
+
+```{r}
+#Nuestro punto de partida clave siempre ha sido el cálculo de la matriz de distancias, añadamos la semilla aleatoria:
+set.seed(2019) #el R decide que tiene que ser algo aleatorio, facilita que R elija ese punto al azar, permitiría que sea replicable, siempre ponerlo por si acaso para queno salga un país en otro sitio. 
+library(cluster)
+library(factoextra)
+inputData=deturb[,c(2:16)]
+g.dist = daisy(inputData, metric="gower")
+#Y con esa matriz calculamos cuatro clusters en nuestras clases previas, pero tal cantidad de clusters salió de una decisión algo arbitraria. Una pregunta exploratoria clave es cuántos clusters deberíamos calcular, y según ellos saber que hay una cantidad diferenciada de perfiles.
+
+```
+
+1. DETERMINANDO CANTIDAD DE CLUSTERS 
+
+```{r}
+#Existe la medida gap, que sirve para determinar el mejor numero de clusters a pedir. Veamos:
+```
+
+Clusters recomendados para partición:
+
+```{r}
+fviz_nbclust(inputData, pam,diss=g.dist,method = "gap_stat",k.max = 10,verbose = F)
+#Significa 7 clusters 
+#Pam es la cantidad de clusters a decidir 
+```
+2
+Clusters recomendados para jerarquización:
+
+```{r}
+fviz_nbclust(inputData, hcut,diss=g.dist,method = "gap_stat",k.max = 10,verbose = F)
+#Se va a utilizar el método del gap_stat para saber cuántos clusters van a haber 
+#Significa 6 clusters
+```
+
+2
+
+2. EVALUANDO LOS CLUSTERS 
+
+Clusterizemos: 
+```{r}
+res.pam = pam(g.dist,2,cluster.only = F)
+res.agnes = hcut(g.dist, k = 2,hc_func='agnes',hc_method = "ward.D") #se emplea el método Ward
+res.diana = hcut(g.dist, k = 2,hc_func='diana')
+
+#Para evaluar, podemos analizar las siluetas (silhouettes), una medida que indica la calidad de asignación de un caso particular.
+```
+
+Evaluación gráfica 
+
+Se van a evaluar los gráficos para cada uno. 
+
+```{r}
+#Evaluación gráfica para pam:
+fviz_silhouette(res.pam)
+
+```
+
+```{r}
+#Evaluación gráfica para agnes:
+fviz_silhouette(res.agnes)
+
+```
+
+```{r}
+#Evaluación gráfica para diana:
+fviz_silhouette(res.diana)
+
+```
+Se asume que el gráfico que tiene menos siluetas negativas es el preferible a los demás.
+También:
+-La técnica de las siluetas van a decir que tan bien han salido 
+  •	Las siluetas revelan cuáles están mal clusterizados
+-Los malos son cuando están para abajito 
+  •	La línea roja entre cortadas es el promedio de las siluetas
+-Mientras, Más o mayor sea el número, mejor silueta
+
+Es indiferente la técnica que se use
+3. EVALUACIÓN NUMÉRICA 
+
+Esta etapa es para identificar a los casos mal asignados: los que tienen silueta negativa. Para ello es bueno saber lo que cada resultado nos trajo:
+
+```{r}
+# por ejemplo tiene:
+str(res.pam)
+```
+Aquí sabemos que res.pam es una lista con varios elementos. Uno de ellos es la información de siluetas, el cual tiene otros componentes:
+
+```{r}
+str(res.pam$silinfo)
+#Lo que se ve es:
+#Str ==>Silinfo 
+#•	Tiene los anchos, 
+#•	Cluster average 
+#•	Ancho promedio de las siluetas 
+
+```
+El primero, los widths, es donde esta la información de cada uno de los casos:
+
+```{r}
+## veamos solo algunos.
+head(res.pam$silinfo$widths)
+```
+
+
+5. MAPA DE CASOS 
+
+Sin embargo, el principal problema es que necesitamos un mapa de posiciones para todos los paises. Eso requiere una técnica que proyecte las dimensiones originales en un plano bidimensional. Para ello usaremos la técnica llamada escalamiento multidimensional:
+
+
+
+
+
+
+
+
+
+```{r}
+proyeccion = cmdscale(g.dist, k=2,add = T) # k is the number of dimensions 
+
+```
+
+
+
+
+Habiendo calculado la proyeccción, recuperemos las coordenadas del mapa del mundo basado en nuestras dimensiones nuevas:
+
+```{r}
+# data frame prep:
+inputData$dim1 <- proyeccion$points[,1] #dimensión 1
+inputData$dim2 <- proyeccion$points[,2] #dimensión 2
+```
+
+Aquí puedes ver el mapa:
+
+```{r}
+base= ggplot(inputData,aes(x=dim1, y=dim2,label=row.names(inputData))) 
+base + geom_text(size=2)
+
+```
+
+Coloreemos el mapa anterior segun el cluster al que corresponden. Creemos esas columnas usando los resultados anteriores:
+
+```{r}
+inputData$pam=as.factor(res.pam$clustering)
+inputData$agnes=as.factor(res.agnes$cluster)
+inputData$diana=as.factor(res.diana$cluster)
+```
+
+Antes de graficar, calculemos los máximos y minimos para producir una gráfica cuadriculada:
+
+```{r}
+# Estimado limites:
+min(inputData[,c('dim1','dim2')]); max(inputData[,c('dim1','dim2')])
+```
+
+Creemos un gráfico que muestre la agrupacion en clusters
+Usando pam
+```{r}
+limites=c(-0.7,0.7)
+
+base= ggplot(inputData,aes(x=dim1, y=dim2)) + ylim(limites) + xlim(limites) + coord_fixed()
+base + geom_point(size=2, aes(color=pam))  + labs(title = "PAM") 
+```
+
+```{r}
+row.names(deturb)=deturb$CountryName
+```
+
+
+```{r}
+library(cluster)
+
+# usar en C() las dimensiones de interes:
+g.dist = daisy(deturb[,c(2:16)], metric="gower")
+```
+
+```{r}
+pam.resultado=pam(g.dist,2,cluster.only = F)
+
+deturb$clusterPT=pam.resultado$cluster
+```
+
+```{r}
+# guardando resultado anterior en objeto "agg": 
+agg=aggregate(as.matrix(cbind(deturb[,c(2:16)]))~ clusterPT, 
+              data=deturb, # luego las funciones que deseas
+              FUN=plyr::each(MD = median, Media = mean))
+
+# convertir en data frame, y 
+tablaResumen=t(as.data.frame(agg))
+tablaResumen
+```
+
+Plots
+
+```{r,fig.width=10, fig.height=10} 
+library(ggrepel)
+
+fviz_cluster(object = list(data=g.dist, cluster = deturb$clusterPT),
+             geom = c("text"), 
+             ellipse = FALSE,labelsize = 15,
+             repel = T)
+```
+
+Hay dos clusters, pero tener en cuenta que no corresponden a la dependiente democracia/no democracia, sino que están agrupándose por "modernidad" (lo que queríamos expresar con las variables)
+
+
+
+#AHORA SE QUIERE VISUALIZAR EL MAPA DE CASOS A TRAVÉS DE CLUSTERS.
+```{r}
+# instalar:
+library(sp)
+library(geojsonio)
+library(rgdal)
+
+fromGit="https://github.com/adrianoshimante1998/PC4viernes/raw/master/UIA_World_Countries_Boundaries.geojson"
+
+mapaMundo <- rgdal::readOGR(fromGit,stringsAsFactors = FALSE)
+plot(mapaMundo)
+```
+
+```{r}
+plot(mapaMundo, border='grey')
+```
+
+
+```{r}
+head(mapaMundo@data)
+```
+
+```{r}
+sort(mapaMundo@data$COUNTRYAFF)
+```
+#calculando posiciones
+
+```{r}
+teste=merge(mapaMundo,deturb,by.x='COUNTRYAFF',by.y='CountryName')
+```
+
+```{r}
+names(teste) 
+```
+
+#Se procederá a graficar: ver las posiciones de las provincias:
+```{r}
+aggregate(agua~clusterPT,data=teste,FUN = mean)
+```
+
+
+```{r}
+
+# colores 
+myColors=c('red','blue') # para 1,2
+
+plot(mapaMundo,col='black', main='Mapa clusterizado')
+plot(teste,col=myColors[teste$clusterPT], add=T,border="white")
+```
+```
